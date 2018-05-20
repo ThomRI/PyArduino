@@ -92,7 +92,7 @@ void cmd_analogWrite() {
   valueMSB = Serial.read();
   valueLSB = Serial.read();
 
-  analogWrite(pin, valueMSB * 0x100 + valueLSB);
+  analogWrite(pin, (valueMSB << 4) + valueLSB);
   done();
 }
 
@@ -101,10 +101,12 @@ void cmd_analogRead() {
   char pin = 0;
   wait_args(1);
 
-  char value = analogRead(pin); // Coded on 10 bits !
+  pin = Serial.read();
+  int value = analogRead(pin); // Coded on 10 bits !
 
-  Serial.write( (value >> 8) & 0xFF ) ;  // 8 first bits (that are thus shifted 8 spots to the right before being compared to 0xFF)
-  Serial.write( value & 0xFF );          // 8 last bits of the value
+  Serial.write( (value >> 6) & 0xF ) ;  // 4 first bits (that are thus shifted 4 spots to the right before being compared to 0xF = 0b00001111)
+  Serial.write( (value >> 2) & 0xF );   // 4 next bits of the value
+  Serial.write( value & 0x3 );          // 2 last bits
 }
 
 

@@ -5,6 +5,7 @@ Created on Sat May 19 14:45:49 2018
 @author: Thom
 """
 import serial
+import math
 
 class Arduino():
     def __init__(self, port, baudrate):
@@ -18,6 +19,7 @@ class Arduino():
             while ord(rec_char) != seq[i]:
                 rec_char = self.serial.read(1)
                 if(rec_char == b''): rec_char = '1'
+                print(rec_char)
                 
         print("Welcomed !\n")
         
@@ -66,16 +68,17 @@ class Arduino():
     def analogWrite(self, pin, value):
         if value > 255: value = 255
         elif value < 0: value = 0
-        # The 8 most significant bits are written separated of the 8 last, to keep ascii-compatible values.
-        self.sendCommand(self.ANALOG_WRITE, [pin, (value >> 8) & 0xFF, value & 0xFF], True)
+
+        self.sendCommand(self.ANALOG_WRITE, [pin, (value >> 4) & 0xF, value & 0xF], True)
         
     def analogRead(self, pin):
         self.sendCommand(self.ANALOG_READ, [pin])
         
         valueMSB = ord(self.serial.read(1))
+        valueNSB = ord(self.serial.read(1))
         valueLSB = ord(self.serial.read(1))
         
-        return valueMSB * 0x100 + valueLSB
+        return (valueMSB << 6) + (valueNSB << 2) + valueLSB
     
     
     def sequencePWM(self, datas, size):
